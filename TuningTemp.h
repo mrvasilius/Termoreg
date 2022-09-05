@@ -37,19 +37,25 @@ void TuningTemp::init(int *theTemp)
 
 void TuningTemp::raiseTemp()
 {
-    *_theTemp = *_theTemp < MAX_TEMP ? *_theTemp + 1 : MAX_TEMP;
+    setTemp(*_theTemp + 1);
 }
 void TuningTemp::reduceTemp()
 {
-    *_theTemp = *_theTemp > MIN_TEMP ? *_theTemp - 1 : MIN_TEMP;
+    setTemp(*_theTemp - 1);
 }
 
 void TuningTemp::setTemp(int newTemp)
 {
     if (newTemp > MAX_TEMP)
-        newTemp = MAX_TEMP;
+    {
+        *_theTemp = MAX_TEMP;
+        return;
+    }
     if (newTemp < MIN_TEMP)
-        newTemp = MIN_TEMP;
+    {
+        *_theTemp = MIN_TEMP;
+        return;
+    }
     *_theTemp = newTemp;
 }
 
