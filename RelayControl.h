@@ -4,8 +4,15 @@
 #define RELAY_BUS D0
 #endif
 
-#define RELAY_ON 1
-#define RELAY_OFF 0
+#ifndef RADIO_RELAY_BUS_INV
+#define RADIO_RELAY_BUS_INV 10
+#endif
+
+#define RELAY_ON HIGH
+#define RELAY_OFF LOW
+
+#define RELAY_INV_ON !RELAY_ON
+#define RELAY_INV_OFF !RELAY_OFF
 
 class RelayControl
 {
@@ -34,6 +41,9 @@ extern RelayControl RC;
 
 RelayControl::RelayControl() {
     pinMode(RELAY_BUS, OUTPUT);
+    pinMode(RADIO_RELAY_BUS_INV, OUTPUT);
+    digitalWrite(RADIO_RELAY_BUS_INV, RELAY_INV_OFF);
+
 }
 
 void RelayControl::setRelay(int theTemp, float temperature)
@@ -88,12 +98,14 @@ void RelayControl::setRelayOn()
 {
     _relayStatus = RELAY_ON;
     digitalWrite(RELAY_BUS, RELAY_ON);
+    digitalWrite(RADIO_RELAY_BUS_INV, RELAY_INV_ON);
 }
 
 void RelayControl::setRelayOff()
 {
     _relayStatus = RELAY_OFF;
     digitalWrite(RELAY_BUS, RELAY_OFF);
+    digitalWrite(RADIO_RELAY_BUS_INV, RELAY_INV_OFF);
 }
 
 RelayControl RC = RelayControl();
