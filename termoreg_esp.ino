@@ -1,4 +1,4 @@
-#define VERSION "1.0.0"
+#define VERSION "1.1.0"
 
 // mkspiffs -c data fs.bin
 //Файл для загрузки должен иметь расширение *.bin
@@ -101,6 +101,8 @@ void setup()
     readTemp();
     ds.requestTemperatures();
     MC.init(RC, &theTemp, &temperature, &qty_sens, &actualSens, sendDto);
+
+    HttpServer.on("/", showVervion);
 }
 void loop()
 {
@@ -125,7 +127,7 @@ void loop()
                 char roomBuf[room.length() + 1];
                 room.toCharArray(roomBuf, room.length() + 1);
                 client.connect(roomBuf, mqttUser, mqttPass);
-                subscribe(room + "/cmd/#");
+                subscribe(String("termoreg/") + room + "/cmd/#");
                 connectTimer.setInterval(60000);
             }
         }
@@ -171,9 +173,9 @@ void sendDto()
 {
     if (sendTimer.isReady())
     {
-        publish(room + "/dto/temp", String(temperature));
-        publish(room + "/dto/setTemp", String(theTemp));
-        publish(room + "/dto/mode", String(RC.getControlMode()));
+        publish(String("termoreg/") + room + "/dto/temp", String(temperature));
+        publish(String("termoreg/") + room + "/dto/setTemp", String(theTemp));
+        publish(String("termoreg/") + room + "/dto/mode", String(RC.getControlMode()));
     }
 }
 
@@ -181,7 +183,7 @@ void receivedCallback(char *topic, byte *payload, unsigned int length)
 {
     if (!workStandalone)
     {
-        if (String(topic) == room + "/cmd/setTemp")
+        if (String(topic) == String("termoreg/") + room + "/cmd/setTemp")
         {
             MC.setMode(ModeControl::eMode::EDIT_TEMP_MODE);
             int temp = atoi((char *)payload);
@@ -192,7 +194,7 @@ void receivedCallback(char *topic, byte *payload, unsigned int length)
             theTemp = temp;
             RC.setControlMode(RelayControl::cMode::C_AUTO);
         }
-        if (String(topic) == room + "/cmd/mode")
+        if (String(topic) == String("termoreg/") + room + "/cmd/mode")
         {
             MC.setMode(ModeControl::eMode::EDIT_CONTROL_MODE);
             RC.setControlMode((RelayControl::cMode)atoi((char *)payload));
@@ -218,4 +220,27 @@ boolean publish(String topic, String payload)
         payload.toCharArray(payloadBuf, payload.length() + 1);
         return client.publish(topicBuf, payloadBuf, true);
     }
+}
+
+void showVervion()
+{
+    String ptr = "<!DOCTYPE html> <html>\n";
+    ptr += "<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
+    ptr += "<meta charset=\"utf-8\">";
+    ptr += "<title>ESP8266-";
+    ptr += room;
+    ptr += "</title>\n";
+    ptr += "<style>html { font-family: Helvetica; display: inline-block; margin: 0px auto; text-align: center;}\n";
+    ptr += "body{margin-top: 50px;} h1 {color: #444444;margin: 50px auto 30px;} h3 {color: #444444;margin-bottom: 50px;}\n";
+    ptr += "p {font-size: 14px;color: #888;margin-bottom: 10px;}\n";
+    ptr += "</style>\n";
+    ptr += "</head>\n";
+    ptr += "<body>\n";
+    ptr += "<h1>Room: ";
+    ptr += room;
+    ptr += "</h1>\n";
+    ptr += "<h3>Firmware version: ";
+    ptr += VERSION;
+    ptr += " <a href=\"/firmware\">обновить</a></h3>\n";
+    HttpServer.send(200, "text/html", ptr);
 }
